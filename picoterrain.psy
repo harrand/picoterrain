@@ -4,6 +4,10 @@
 	add_build_file("gpuren/gpu.psy", "default");
 	add_build_file("psystdlib/stdlib.psy", "default");
 	add_source_directory("src");
+	debug_symbols(true);
+
+	prebuild_command("glslc src/shaders/vtx.glsl -o build/vtx.spv");
+	prebuild_command("glslc src/shaders/frg.glsl -o build/frg.spv");
 
 	static if(_win32)
 	{
@@ -31,6 +35,8 @@ main ::= func(args : program_args? -> s32)
 	defer end_arenas();
 	main_window = window_open(800, 600, "picoterrain", window_flag.maximised | window_flag.bare, global_arena);
 
+	render_setup();
+
 	while(window_is_open(main_window))
 	{
 		if(is_key_down(key.escape))
@@ -38,6 +44,7 @@ main ::= func(args : program_args? -> s32)
 			window_close(main_window);
 		}
 		arena_clear(frame_arena);
+		render();
 		update_windows();
 	}
 	return 0;

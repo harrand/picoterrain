@@ -1,0 +1,88 @@
+renderer_data ::= struct
+{
+	shader : gpu_shader;
+	pass : gpu_pass;
+	graph : gpu_graph;
+};
+renderer : renderer_data mut := zero;
+
+render_setup ::= func(-> v0)
+{
+	// setup gpuren
+	gpu_init(gpu_appinfo
+	{
+		.name := "Red Nightmare";
+		.ver_maj := 0;
+		.ver_min := 1;
+	});
+
+	// tell it which hardware to use
+	hardware_count ::= gpu_hardware_count();
+	hardware_list : gpu_hardware mut? := arena_alloc(global_arena, __sizeof(gpu_hardware) * hardware_count);
+	gpu_query_hardware(hardware_list # 0, hardware_count, global_arena);
+	hardware_idx ::= gpu_hardware_select(hardware_list, hardware_count, gpu_default_hardware_score);
+	gpu_use_hardware(deref(hardware_list # hardware_idx), gpu_wsi
+	{
+		.type := gpu_wsi_type.window;
+		.window := gpu_wsi_window
+		{
+			.handle := main_window@s64@_;
+			.get_native := impl_window_get_native;
+			.get_dimensions := impl_window_get_dimensions;
+		};
+	});
+	gpu_set_present_mode(gpu_present_mode.vsync);	
+
+	// create the renderer
+	// 1: shader
+	vtx ::= __embed("build/vtx.spv");
+	frg ::= __embed("build/frg.spv");
+	renderer.shader = gpu_create_graphics_shader(vtx.data, vtx.size, frg.data, frg.size, global_arena);
+	
+	// 2: resources
+	// 3: pass
+	colour_targets ::= gpu_resource[1]{gpu_resource.window_resource;};
+	main_pass_result ::= gpu_create_pass(gpu_pass_info
+	{
+		.graphics := gpu_graphics_state
+		{
+			.primitive := gpu_primitive.triangle;
+			.clear_colour := f32[4]{0.0; 0.0; 0.0; 1.0;};
+			.scissor := zero;
+			.colour_targets_data := colour_targets # 0;
+			.colour_targets_count := __sizeof(colour_targets) / __sizeof(deref(colour_targets # 0));
+			.depth_target := gpu_resource.window_resource;
+			.index_buffer := gpu_resource.invalid;
+			.draw_buffer := gpu_resource.invalid;
+			.culling := gpu_cull.none;	
+			.static_prim_count := 3;
+		};
+		.shader := renderer.shader;
+		.resources_data := zero;
+		.resources_count := zero;
+		.name := "Terrain Render Pass";
+	}, global_arena, frame_arena);
+
+	// 4: graph
+	renderer.graph = gpu_create_graph(gpu_graph_info
+	{
+		.name := "Picoterrain Render";
+		.flags := gpu_graph_flag.present;
+	}, global_arena);
+	gpu_graph_add_pass(renderer.graph, renderer.pass, zero, zero, global_arena);
+};
+
+render ::= func(-> v0)
+{
+	gpu_execute(renderer.graph, global_arena, frame_arena);
+};
+
+impl_window_get_native ::= func(handle : u64 -> u64)
+{
+	return window_native(handle@s64@window);
+};
+
+impl_window_get_dimensions ::= func(handle : u64 -> u32[2])
+{
+	return window_dimensions(handle@s64@_);
+};
