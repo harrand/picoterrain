@@ -39,8 +39,13 @@ main ::= func(args : program_args? -> s32)
 	main_window = window_open(800, 600, "picoterrain", window_flag.maximised | window_flag.bare, global_arena);
 
 	render_setup();
-	camera()->t = f32[3]{0.0; 25.0; 0.0;};
-	camera()->r = euler2quat(f32[3]{math_pi * -0.5; 0.0; 0.0;});
+	// birds eye view
+	//camera()->t = f32[3]{0.0; 25.0; 0.0;};
+	//camera()->r = euler2quat(f32[3]{math_pi * -0.5; 0.0; 0.0;});
+
+	// normal view
+	camera()->t = f32[3]{0.0; 1.0; 0.0;};
+	camera()->r = euler2quat(zero);
 
 	while(window_is_open(main_window))
 	{

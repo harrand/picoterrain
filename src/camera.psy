@@ -13,7 +13,7 @@ camera_move_forward ::= func(speed : f32 -> v0)
 {
 	cam ::= camera();
 	inverse_rotation ::= quat_inverse(cam->r);
-	cam->t = vec3_add(cam->t, quat_rotate(inverse_rotation, f32[3]{0.0; 0.0; speed;}));
+	cam->t = vec3_add(cam->t, quat_rotate(inverse_rotation, f32[3]{0.0; 0.0; -speed;}));
 };
 
 camera_move_backward ::= func(speed : f32 -> v0)

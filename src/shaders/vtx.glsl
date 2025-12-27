@@ -5,9 +5,12 @@
 #extension GL_ARB_shader_draw_parameters : require
 #pragma shader_stage(vertex)
 #include "math.glsl"
+#include "simplex.glsl"
 
 #define plane_subdivide_x 64
 #define plane_subdivide_y 64
+
+layout(location = 0) out float height;
 
 const vec2 positions[6] = vec2[6](
 	vec2(0.0, 0.0),
@@ -40,6 +43,10 @@ mat4 view_matrix()
 
 void main()
 {
+	// we have a number of vertices that we assume is equal to 6 * plane_subdivide_x * plane_subdivide_y
+	// we plot the positions of each vertex manually here instead of having vertex data
+	// this is meant to be a subdivided plane
+
 	// 6 verts per quad
 	uint quad_id = gl_VertexIndex / 6;
 	uint vtx_id = gl_VertexIndex % 6;
@@ -47,7 +54,6 @@ void main()
 	uint x = quad_id % plane_subdivide_x;
 	uint z = quad_id / plane_subdivide_y;
 
-	const float y = 0;
 	const float scale = 2;
 
 	vec2 localxz = positions[vtx_id];
@@ -56,6 +62,9 @@ void main()
 	// i want it centered around 0, 0
 	xz -= vec2(scale * plane_subdivide_x * 0.5, scale * plane_subdivide_y * 0.5);
 	vec2 uv = xz / vec2(plane_subdivide_x * scale, plane_subdivide_y * scale);
+
+	const float y = simplex(uv * 190);
+	height = y;
 	
 	gl_Position = perspective(1.5701, 1920.0 / 1080.0) * view_matrix() * vec4(xz.x, y, xz.y, 1.0);
 
