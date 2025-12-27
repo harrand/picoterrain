@@ -5,7 +5,34 @@
 #extension GL_ARB_shader_draw_parameters : require
 #pragma shader_stage(vertex)
 
+#define plane_subdivide_x 4
+#define plane_subdivide_y 4
+
+const vec2 positions[6] = vec2[6](
+	vec2(0.0, 0.0),
+	vec2(1.0, 0.0),
+	vec2(0.0, 1.0),
+	vec2(1.0, 0.0),
+	vec2(1.0, 1.0),
+	vec2(0.0, 1.0)
+);
+
 void main()
 {
-	gl_Position = vec4(0.0, 0.0, 0.0, 0.0);
+	// 6 verts per quad
+	uint quad_id = gl_VertexIndex / 6;
+	uint vtx_id = gl_VertexIndex % 6;
+	
+	uint x = quad_id % plane_subdivide_x;
+	uint z = quad_id % plane_subdivide_y;
+
+	const float y = 0;
+	const float scale = 20;
+
+	vec2 localxz = positions[vtx_id];
+	vec2 xz = (vec2(x, z) + localxz) * scale;
+	vec2 uv = xz / vec2(plane_subdivide_x * scale, plane_subdivide_y * scale);
+	
+	gl_Position = vec4(xz.x, y, xz.y, 1.0);
+
 }

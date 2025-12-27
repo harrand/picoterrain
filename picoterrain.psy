@@ -29,6 +29,9 @@ global_arena : arena mut? mut := zero;
 frame_arena_value : arena mut := zero;
 frame_arena : arena mut? mut := zero;
 
+plane_subdivide_x ::= 4;
+plane_subdivide_y ::= 4;
+
 main ::= func(args : program_args? -> s32)
 {
 	begin_arenas();

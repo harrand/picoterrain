@@ -55,7 +55,7 @@ render_setup ::= func(-> v0)
 			.index_buffer := gpu_resource.invalid;
 			.draw_buffer := gpu_resource.invalid;
 			.culling := gpu_cull.none;	
-			.static_prim_count := 3;
+			.static_prim_count := 3 * 2 * plane_subdivide_x * plane_subdivide_y;
 		};
 		.shader := renderer.shader;
 		.resources_data := zero;
