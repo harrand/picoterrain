@@ -1,5 +1,7 @@
 renderer_data ::= struct
 {
+	camera_buffer : gpu_resource;
+
 	shader : gpu_shader;
 	pass : gpu_pass;
 	graph : gpu_graph;
@@ -40,8 +42,20 @@ render_setup ::= func(-> v0)
 	renderer.shader = gpu_create_graphics_shader(vtx.data, vtx.size, frg.data, frg.size, global_arena);
 	
 	// 2: resources
+	camera_buffer_result ::= gpu_create_buffer(gpu_resource_info
+	{
+		.data := zero;
+		.data_size := __sizeof(camera_data);
+		.flags := gpu_resource_flag.zero_memory;
+		.buffer_flags := gpu_buffer_flag.dynamic;
+		.name := "camera buffer";
+	}, global_arena);
+	renderer.camera_buffer = (camera_buffer_result.res);
+
 	// 3: pass
 	colour_targets ::= gpu_resource[1]{gpu_resource.window_resource;};
+	resources ::= gpu_resource[1]{renderer.camera_buffer;};
+
 	main_pass_result ::= gpu_create_pass(gpu_pass_info
 	{
 		.graphics := gpu_graphics_state
@@ -58,10 +72,11 @@ render_setup ::= func(-> v0)
 			.static_prim_count := 3 * 2 * plane_subdivide_x * plane_subdivide_y;
 		};
 		.shader := renderer.shader;
-		.resources_data := zero;
-		.resources_count := zero;
+		.resources_data := resources # 0;
+		.resources_count := __sizeof(resources) / __sizeof(deref(resources # 0));
 		.name := "Terrain Render Pass";
 	}, global_arena, frame_arena);
+	renderer.pass = (main_pass_result.res);
 
 	// 4: graph
 	renderer.graph = gpu_create_graph(gpu_graph_info
@@ -77,6 +92,11 @@ render ::= func(-> v0)
 	gpu_execute(renderer.graph, global_arena, frame_arena);
 };
 
+camera ::= func(-> camera_data mut?)
+{
+	return gpu_resource_pointer(renderer.camera_buffer).ptr@_;
+};
+
 impl_window_get_native ::= func(handle : u64 -> u64)
 {
 	return window_native(handle@s64@window);
@@ -85,4 +105,10 @@ impl_window_get_native ::= func(handle : u64 -> u64)
 impl_window_get_dimensions ::= func(handle : u64 -> u32[2])
 {
 	return window_dimensions(handle@s64@_);
+};
+
+camera_data ::= struct
+{
+	t : f32 mut[4];
+	r : f32 mut[4];
 };

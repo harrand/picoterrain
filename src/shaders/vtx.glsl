@@ -4,6 +4,7 @@
 #extension GL_EXT_shader_explicit_arithmetic_types_int64 : enable
 #extension GL_ARB_shader_draw_parameters : require
 #pragma shader_stage(vertex)
+#include "math.glsl"
 
 #define plane_subdivide_x 4
 #define plane_subdivide_y 4
@@ -16,6 +17,26 @@ const vec2 positions[6] = vec2[6](
 	vec2(1.0, 1.0),
 	vec2(0.0, 1.0)
 );
+
+struct camera_data
+{
+	vec3 t;
+	vec4 r;
+};
+
+layout(scalar, buffer_reference, buffer_reference_align = 8) readonly buffer camera_t
+{
+	camera_data data;
+};
+
+layout(scalar, set = 0, binding = 0) readonly buffer MetaBuffer{
+	camera_t camera;
+};
+
+mat4 view_matrix()
+{
+	return inverse(trs2mat(trs(camera.data.t, camera.data.r, vec3(1.0))));
+}
 
 void main()
 {
@@ -33,6 +54,6 @@ void main()
 	vec2 xz = (vec2(x, z) + localxz) * scale;
 	vec2 uv = xz / vec2(plane_subdivide_x * scale, plane_subdivide_y * scale);
 	
-	gl_Position = vec4(xz.x, y, xz.y, 1.0);
+	gl_Position = perspective(1.5701, 1920.0 / 1080.0) * view_matrix() * vec4(xz.x, y, xz.y, 1.0);
 
 }
