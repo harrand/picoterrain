@@ -10,8 +10,6 @@
 #define plane_subdivide_x 64
 #define plane_subdivide_y 64
 
-layout(location = 0) out float height;
-
 const vec2 positions[6] = vec2[6](
 	vec2(0.0, 0.0),
 	vec2(1.0, 0.0),
@@ -27,14 +25,31 @@ struct camera_data
 	vec4 r;
 };
 
+struct terrain_data
+{
+	uint seed;
+	float sea_level;
+	vec3 sea_colour;
+	float sea_banding;
+};
+
+layout(scalar, buffer_reference, buffer_reference_align = 8) readonly buffer terrain_t
+{
+	terrain_data data;
+};
+
 layout(scalar, buffer_reference, buffer_reference_align = 8) readonly buffer camera_t
 {
 	camera_data data;
 };
 
 layout(scalar, set = 0, binding = 0) readonly buffer MetaBuffer{
+	terrain_t terrain;
 	camera_t camera;
 };
+
+layout(location = 0) out float height;
+layout(location = 1) out terrain_data out_terrain;
 
 mat4 view_matrix()
 {
@@ -67,5 +82,5 @@ void main()
 	height = y;
 	
 	gl_Position = perspective(1.5701, 1920.0 / 1080.0) * view_matrix() * vec4(xz.x, y, xz.y, 1.0);
-
+	out_terrain = terrain.data;
 }

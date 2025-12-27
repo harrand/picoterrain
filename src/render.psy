@@ -1,6 +1,7 @@
 renderer_data ::= struct
 {
 	camera_buffer : gpu_resource;
+	terrain_buffer : gpu_resource;
 
 	shader : gpu_shader;
 	pass : gpu_pass;
@@ -42,6 +43,16 @@ render_setup ::= func(-> v0)
 	renderer.shader = gpu_create_graphics_shader(vtx.data, vtx.size, frg.data, frg.size, global_arena);
 	
 	// 2: resources
+	terrain_buffer_result ::= gpu_create_buffer(gpu_resource_info
+	{
+		.data := zero;
+		.data_size := __sizeof(terrain_data);
+		.flags := gpu_resource_flag.zero_memory;
+		.buffer_flags := gpu_buffer_flag.dynamic;
+		.name := "terrain buffer";
+	}, global_arena);
+	renderer.terrain_buffer = (terrain_buffer_result.res);
+
 	camera_buffer_result ::= gpu_create_buffer(gpu_resource_info
 	{
 		.data := zero;
@@ -54,7 +65,7 @@ render_setup ::= func(-> v0)
 
 	// 3: pass
 	colour_targets ::= gpu_resource[1]{gpu_resource.window_resource;};
-	resources ::= gpu_resource[1]{renderer.camera_buffer;};
+	resources ::= gpu_resource[2]{renderer.terrain_buffer; renderer.camera_buffer;};
 
 	main_pass_result ::= gpu_create_pass(gpu_pass_info
 	{
