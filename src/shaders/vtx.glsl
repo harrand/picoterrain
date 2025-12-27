@@ -6,8 +6,8 @@
 #pragma shader_stage(vertex)
 #include "math.glsl"
 
-#define plane_subdivide_x 4
-#define plane_subdivide_y 4
+#define plane_subdivide_x 64
+#define plane_subdivide_y 64
 
 const vec2 positions[6] = vec2[6](
 	vec2(0.0, 0.0),
@@ -45,13 +45,16 @@ void main()
 	uint vtx_id = gl_VertexIndex % 6;
 	
 	uint x = quad_id % plane_subdivide_x;
-	uint z = quad_id % plane_subdivide_y;
+	uint z = quad_id / plane_subdivide_y;
 
 	const float y = 0;
-	const float scale = 20;
+	const float scale = 2;
 
 	vec2 localxz = positions[vtx_id];
 	vec2 xz = (vec2(x, z) + localxz) * scale;
+	// problem is the corner starts at [0, 0]
+	// i want it centered around 0, 0
+	xz -= vec2(scale * plane_subdivide_x * 0.5, scale * plane_subdivide_y * 0.5);
 	vec2 uv = xz / vec2(plane_subdivide_x * scale, plane_subdivide_y * scale);
 	
 	gl_Position = perspective(1.5701, 1920.0 / 1080.0) * view_matrix() * vec4(xz.x, y, xz.y, 1.0);

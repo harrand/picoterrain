@@ -5,7 +5,7 @@ control ::= func(-> v0)
 	{
 		return;
 	}
-	speed ::= 0.01;
+	speed ::= 0.15;
 
 	if(is_key_down(key.escape))
 	{
