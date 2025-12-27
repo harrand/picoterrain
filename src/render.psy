@@ -92,11 +92,6 @@ render ::= func(-> v0)
 	gpu_execute(renderer.graph, global_arena, frame_arena);
 };
 
-camera ::= func(-> camera_data mut?)
-{
-	return gpu_resource_pointer(renderer.camera_buffer).ptr@_;
-};
-
 impl_window_get_native ::= func(handle : u64 -> u64)
 {
 	return window_native(handle@s64@window);
@@ -107,8 +102,3 @@ impl_window_get_dimensions ::= func(handle : u64 -> u32[2])
 	return window_dimensions(handle@s64@_);
 };
 
-camera_data ::= struct
-{
-	t : f32 mut[4];
-	r : f32 mut[4];
-};

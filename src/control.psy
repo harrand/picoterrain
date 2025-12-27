@@ -1,0 +1,22 @@
+control ::= func(-> v0)
+{
+	// keyboard/mouse control
+	if(!window_has_focus(main_window))
+	{
+		return;
+	}
+	speed ::= 0.01;
+
+	if(is_key_down(key.escape))
+	{
+		window_close(main_window);
+	}
+	if(is_key_down(key.w))
+	{
+		camera_move_forward(speed);
+	}
+	if(is_key_down(key.s))
+	{
+		camera_move_backward(speed);
+	}
+};

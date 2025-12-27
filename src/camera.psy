@@ -1,0 +1,22 @@
+camera_data ::= struct
+{
+	t : f32 mut[3];
+	r : f32 mut[4];
+};
+
+camera ::= func(-> camera_data mut?)
+{
+	return gpu_resource_pointer(renderer.camera_buffer).ptr@_;
+};
+
+camera_move_forward ::= func(speed : f32 -> v0)
+{
+	cam ::= camera();
+	inverse_rotation ::= quat_inverse(cam->r);
+	cam->t = vec3_add(cam->t, quat_rotate(inverse_rotation, f32[3]{0.0; 0.0; speed;}));
+};
+
+camera_move_backward ::= func(speed : f32 -> v0)
+{
+	camera_move_forward(-speed);
+};
