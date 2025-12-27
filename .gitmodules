@@ -1,0 +1,6 @@
+[submodule "gpuren"]
+	path = gpuren
+	url = https://github.com/harrand/gpuren
+[submodule "psystdlib"]
+	path = psystdlib
+	url = https://github.com/harrand/psystdlib

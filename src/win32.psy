@@ -1,0 +1,157 @@
+static if(_win32)
+{
+	WNDCLASSEXA ::= struct
+	{
+		cbSize : u32;
+		style : u32;
+		wndproc : func(hwnd : u64, msg : u32, wparam : u64, lparam : s64 -> s64);
+		cbClsExtra : s32;
+		cbWndExtra : s32;
+		hInstance : u64;
+		hIcon : u64;
+		hCursor : u64;
+		hbrBackground : u64;
+		lpszMenuName : u8?;
+		lpszClassName : u8?;
+		hIconSm : u64;
+	};
+
+	PostMessageA ::= func(hwnd : u64, msg : u32, wparam : u64, lparam : s64 -> s32) := extern;
+	DefWindowProcA ::= func(hwnd : u64, msg : u32, wparam : u64, lparam : s64 -> s64) := extern;
+	LoadIconA ::= func(hinstance : u64, lpIconName : u8? -> u64) := extern;
+	LoadCursorA ::= func(hinstance : u64, lpIconName : u8? -> u64) := extern;
+	RegisterClassExA ::= func(class : WNDCLASSEXA? -> u16) := extern;
+	CreateWindowExA ::= func
+	(
+		dwExStyle : u32,
+		lpClassName : u8?,
+		lpWindowName : u8?,
+		dwStyle : u32,
+		x : s32,
+		y : s32,
+		nWidth : s32,
+		nHeight : s32,
+		hWndParent : u64,
+		hMenu : u64,
+		hInstance : u64,
+		lpParam : v0?
+		-> u64
+	) := extern;
+	ShowWindow ::= func(hwnd : u64, nCmdShow : s32 -> s32) := extern;
+
+	DestroyWindow ::= func(hwnd : u64 -> s32) := extern;
+	PostQuitMessage ::= func(nExitCode : s32 -> v0) := extern;
+
+	RECT ::= struct
+	{
+		left : s32;
+		top : s32;
+		right : s32;
+		bottom : s32;
+	};
+	GetWindowRect ::= func(hwnd : u64, lpRect : RECT mut? -> s32) := extern;
+	GetClientRect ::= func(hwnd : u64, lpRect : RECT mut? -> s32) := extern;
+	SetWindowPos ::= func(hwnd : u64, hwndInsertAfter : u64, x : s32, y : s32, cx : s32, cy : s32, uflags : u32 -> s32) := extern;
+	GetModuleHandleA ::= func(lpModuleName : u8? -> u64) := extern;
+	GetForegroundWindow ::= func(-> u64) := extern;
+
+	POINT ::= struct
+	{
+		x : s32;
+		y : s32;
+	};
+
+	WINMSG ::= struct
+	{
+		hwnd : u64;
+		message : u32;
+		wparam : u64;
+		lparam : s64;
+		time : u64;
+		pt : POINT;
+	};
+
+	CW_USEDEFAULT ::= -2147483648;
+
+	PeekMessageA ::= func(lpMsg : WINMSG mut?, hwnd : u64, wMsgFilterMin : u32, wMsgFilterMax : u32, wRemoveMsg : u32 -> s32) := extern;
+	TranslateMessage ::= func(lpMsg : WINMSG? -> s32) := extern;
+	DispatchMessageA ::= func(lpMsg : WINMSG? -> s64) := extern;
+	SetWindowLongPtrA ::= func(hwnd : u64, nIndex : s32, dwNewLong : s64 -> s64) := extern;
+	GetWindowLongPtrA ::= func(hwnd : u64, nIndex : s32 -> s64) := extern;
+
+	GetCursorPos ::= func(lpPoint : POINT mut? -> s32) := extern;
+	SetCursorPos ::= func(x : s32, y : s32 -> s32) := extern;
+
+	ShowCursor ::= func(bShow : s32 -> s32) := extern;
+
+	GetLastError ::= func(-> u32) := extern;
+
+	DWM_BLURBEHIND ::= struct
+	{
+		dwFlags : u32;
+		fEnable : s32;
+		hRgnBlur : u64;
+		fTransitionOnMaximized : s32;
+	};
+
+	CreateRectRgn ::= func(x1 : s32, y1 : s32, x2 : s32, y2 : s32 -> u64) := extern;
+	DwmEnableBlurBehindWindow ::= func(hwnd : u64, pBlurBehind : DWM_BLURBEHIND? -> s32) := extern;
+
+	GetWindowTextLengthA ::= func(hwnd : u64 -> s32) := extern;
+	GetWindowTextA ::= func(hwnd : u64, lpString : u8 mut?, nMaxCount : s32 -> s32) := extern;
+	SetWindowTextA ::= func(hwnd : u64, lpString : u8? -> s32) := extern;
+
+	WINDOWPLACEMENT ::= struct
+	{
+		length : u32;
+		flags : u32;
+		showCmd : u32;
+		ptMinPosition : POINT;
+		ptMaxPosition : POINT;
+		rcNormalPosition : RECT;
+		rcDevice : RECT;
+	};
+	GetWindowPlacement ::= func(hwnd : u64, lpwndpl : WINDOWPLACEMENT mut? -> s32) := extern;
+	SetWindowPlacement ::= func(hwnd : u64, lpwndpl : WINDOWPLACEMENT? -> s32) := extern;
+
+	MONITORINFO ::= struct
+	{
+		cbSize : u32;
+		rcMonitor : RECT;
+		rcWork : RECT;
+		dwFlags : u32;
+	};
+
+	GetMonitorInfoA ::= func(hMonitor : u64, lpmi : MONITORINFO mut? -> s32) := extern;
+	MonitorFromWindow ::= func(hwnd : u64, dwFlags : u32 -> u64) := extern;
+
+	SW_HIDE ::= 0;
+	SW_SHOWNORMAL ::= 1;
+	SW_MINIMIZE ::= 6;
+	SW_MAXIMIZE ::= 3;
+	SW_SHOW ::= 5;
+
+	SWP_NOZORDER ::= 4;
+	SWP_NOMOVE ::= 2;
+	SWP_NOSIZE ::= 1;
+	SWP_NOOWNERZORDER ::= 0x0200;
+	SWP_FRAMECHANGED ::= 0x0020;
+
+	GWL_STYLE ::= -16;
+
+	WS_OVERLAPPED ::= 0;
+	WS_THICKFRAME ::= 0x00040000;
+	WS_MINIMIZEBOX ::= 0x00020000;
+	WS_MAXIMIZEBOX ::= 0x00010000;
+	WS_POPUP ::= 0x80000000;
+	WS_BORDER ::= 0x00800000; 
+	WS_SIZEBOX ::= 0x00040000;
+	WS_SYSMENU ::= 0x00080000; 
+	WS_CAPTION ::= 0x00C00000;
+	WS_OVERLAPPEDWINDOW ::= WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX;
+
+	GetAsyncKeyState ::= func(vkey : s32 -> s16) := extern;
+
+	GetCurrentThread ::= func( -> u64) := extern;
+	TerminateThread ::= func(thread : u64, dwExitCode : u32 -> s32) := extern;
+}
