@@ -6,10 +6,12 @@ terrain ::= func(-> terrain_data mut?)
 terrain_data ::= struct
 {
 	seed : u32;
-	// at what height should we be the sea_colour?
+	// at what height should we be the sea_colour? also everything is clamped to sea_level
 	sea_level : f32;
 	// what colour is the sea?
 	sea_colour : f32[3];
 	// between (sea_level + sea_banding) and (sea_level), the colour lerps towards sea_colour
+	// is sand called sand because its between the sea and the land?
 	sea_banding : f32;
+	base_colour : f32[3];
 };
