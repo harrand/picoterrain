@@ -1,0 +1,8 @@
+create_terrain ::= func(-> terrain_state_t)
+{
+	return zero;
+};
+
+terrain_state_t ::= struct
+{
+};

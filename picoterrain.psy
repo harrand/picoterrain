@@ -18,7 +18,48 @@
 	}
 }
 
+main_window : window mut;
+
+global_arena_value : arena mut := zero;
+global_arena : arena mut? mut := zero;
+frame_arena_value : arena mut := zero;
+frame_arena : arena mut? mut := zero;
+
 main ::= func(args : program_args? -> s32)
 {
+	begin_arenas();
+	defer end_arenas();
+	main_window = window_open(800, 600, "picoterrain", window_flag.maximised | window_flag.bare, global_arena);
+
+	while(window_is_open(main_window))
+	{
+		if(is_key_down(key.escape))
+		{
+			window_close(main_window);
+		}
+		arena_clear(frame_arena);
+		update_windows();
+	}
 	return 0;
+};
+
+
+begin_arenas ::= func(-> v0)
+{
+	global_arena_value = arena_create_virtual_reserve(arena_default_reserve, 1024 * 1024);
+	global_arena = ref global_arena_value;	
+
+	frame_arena_value = arena_create_virtual_reserve(arena_default_reserve, 1024 * 1024);
+	frame_arena = ref frame_arena_value;	
+};
+
+end_arenas ::= func(-> v0)
+{
+	putzstr("global arena size: ");
+	putuint(global_arena->cur);
+	putzstr("B");
+	putchar(10);
+	arena_destroy(global_arena);
+
+	arena_destroy(frame_arena);
 };

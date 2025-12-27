@@ -1,0 +1,326 @@
+window ::= enum{.invalid := 0;};
+window_flag ::= enum
+{
+	.maximised := 1;
+	.transparent := 2;
+	.invisible := 4;
+	.bare := 8;
+};
+
+window_open ::= func(w : u64, h : u64, title : u8?, flags : window_flag, a : arena mut? -> window)
+{
+	if(!wndclass_registered)
+	{
+		_register_wndclass();
+	}
+	if(_window_cap == 0)
+	{
+		_window_cap = 8;
+		_window_data = arena_alloc(a, __sizeof(deref _window_data) * _window_cap);
+	}
+	while(_window_count >= _window_cap)
+	{
+		oldcap ::= _window_cap;
+		olddata ::= _window_data;
+		_window_cap = _window_cap * 2;
+		_window_data = arena_alloc(a, __sizeof(deref _window_data) * _window_cap);
+		memcopy(_window_data, olddata, oldcap * __sizeof(deref _window_data));
+	}
+	retid ::= _window_count;
+	wndptr ::= _window_data # retid;
+	_window_count = _window_count + 1;
+
+	static if(_win32)
+	{
+		style : u32 mut := WS_OVERLAPPEDWINDOW;
+		if((flags & window_flag.bare) != zero)
+		{
+			style = WS_POPUP;
+		}
+		hwnd ::= CreateWindowExA(zero, wndclass_name, title, style, CW_USEDEFAULT, CW_USEDEFAULT, w@s32, h@s32, 0, 0, GetModuleHandleA(zero), zero);
+		if(hwnd == 0)
+		{
+			putzstr("failed to open window: ");
+			putsint(GetLastError());
+			__debugbreak();
+		}
+		if((flags & window_flag.transparent) != zero)
+		{
+			bb ::= DWM_BLURBEHIND
+			{
+				.dwFlags := 1 | 2;
+				.fEnable := true@s32;
+				.hRgnBlur := CreateRectRgn(0, 0, -1, -1);
+				.fTransitionOnMaximized := zero;
+			};
+			DwmEnableBlurBehindWindow(hwnd, ref bb);
+		}
+		if((flags & window_flag.invisible) == zero)
+		{
+			ShowWindow(hwnd, SW_SHOW);
+		}
+		deref wndptr = _window_data_t
+		{
+			.handle := hwnd;
+			.open := true;
+			.win32_placement_cache := zero;
+		};
+		wndptr->win32_placement_cache.length = __sizeof(WINDOWPLACEMENT);
+		GetWindowPlacement(hwnd, ref(wndptr->win32_placement_cache));
+		if(SetWindowLongPtrA(hwnd, -21, retid@s64) == 0)
+		{
+			if(GetLastError() != 0)
+			{
+				putzstr("failed to set window metadata: ");
+				putsint(GetLastError());
+				__debugbreak();
+			}
+		}
+		ret ::= retid@s64@window;
+		if((flags & window_flag.maximised) != zero)
+		{
+			window_maximize(ret);
+		}
+		return ret;
+	}
+	else
+	{
+		__error("window_open NYI on linux");
+	}
+};
+
+window_close ::= func(wnd : window -> v0)
+{
+	_close_window(wnd@s64@u64);
+};
+
+window_is_open ::= func(wnd : window -> bool)
+{
+	return (_window_data # (wnd@s64))->open;
+};
+
+window_has_focus ::= func(wnd : window -> bool)
+{
+	return (_window_data # (wnd@s64))->handle == GetForegroundWindow();
+};
+
+window_dimensions ::= func(wnd : window -> u32[2])
+{
+	rect : RECT mut;
+	if(GetClientRect((_window_data # (wnd@s64))->handle, ref rect) != 0)
+	{
+		return u32[2]{(rect.right - rect.left)@u32; (rect.bottom - rect.top)@u32;};
+	}
+	return zero;
+};
+
+window_set_dimensions ::= func(wnd : window, dims : u32[2] -> v0)
+{
+	nat ::= window_native(wnd);
+	// get current window rect (incl. title bar, borders etc)
+	wndrect : RECT mut;
+	GetWindowRect(nat, ref wndrect);
+	// now the client area dims
+	clientrect : RECT mut;
+	GetClientRect(nat, ref clientrect);
+	wwidth ::= wndrect.right - wndrect.left;
+	wheight ::= wndrect.bottom - wndrect.top;
+	cwidth ::= clientrect.right - clientrect.left;
+	cheight ::= clientrect.bottom - clientrect.top;
+	
+	border_width ::= wwidth - cwidth;
+	border_height ::= wheight - cheight;
+
+	width ::= deref(dims # 0);
+	height ::= deref(dims # 1);
+
+	SetWindowPos(nat, zero, zero, zero, width@_ + border_width, height@_ + border_height, SWP_NOZORDER | SWP_NOMOVE);
+};
+
+window_show ::= func(wnd : window -> v0)
+{
+	wnddata ::= _window_data # (wnd@s64);
+	nat ::= wnddata->handle;
+
+	dwStyle ::= GetWindowLongPtrA(nat, GWL_STYLE);
+	SetWindowLongPtrA(nat, GWL_STYLE, dwStyle | WS_OVERLAPPEDWINDOW);
+	if((dwStyle & WS_OVERLAPPEDWINDOW) == zero)
+	{
+		SetWindowPlacement(nat, ref(wnddata->win32_placement_cache));
+		SetWindowPos(nat, zero, zero, zero, zero, zero, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+	}
+};
+
+window_maximize ::= func(wnd : window -> v0)
+{
+	ShowWindow(window_native(wnd), SW_MAXIMIZE);
+};
+
+window_minimize ::= func(wnd : window -> v0)
+{
+	ShowWindow(window_native(wnd), SW_MINIMIZE);
+};
+
+window_fullscreen ::= func(wnd : window -> v0)
+{
+	wnddata ::= _window_data # (wnd@s64);
+	nat ::= wnddata->handle;
+
+	dwStyle ::= GetWindowLongPtrA(nat, GWL_STYLE);
+	mi ::= MONITORINFO mut
+	{
+		.cbSize := __sizeof(MONITORINFO);
+	};
+	if(GetMonitorInfoA(MonitorFromWindow(nat, 1), ref mi)@bool)
+	{
+		if((dwStyle & WS_OVERLAPPEDWINDOW) != zero)
+		{
+			GetWindowPlacement(nat, ref(wnddata->win32_placement_cache));
+		}
+		SetWindowLongPtrA(nat, GWL_STYLE, dwStyle & (~WS_OVERLAPPEDWINDOW));
+		HWND_TOP ::= 0;
+		SetWindowPos(nat, HWND_TOP, mi.rcMonitor.left, mi.rcMonitor.top, (mi.rcMonitor.right) - (mi.rcMonitor.left), (mi.rcMonitor.bottom) - (mi.rcMonitor.top), SWP_NOOWNERZORDER | SWP_FRAMECHANGED);
+	}
+};
+
+window_native ::= func(wnd : window -> u64)
+{
+	return (_window_data # (wnd@s64))->handle;
+};
+
+window_title ::= func(wnd : window, buf : u8 mut?, len : u64, actual_len : u64 mut? -> bool)
+{
+	nat ::= window_native(wnd);
+	wintextlen ::= GetWindowTextLengthA(nat)@u64;
+	if(actual_len != zero)
+	{
+		deref actual_len = wintextlen;
+	}
+	if(len >= wintextlen)
+	{
+		GetWindowTextA(nat, buf, len@_);
+		return true;
+	}
+	return false;
+};
+
+window_set_title ::= func(wnd : window, title : u8? -> v0)
+{
+	SetWindowTextA(window_native(wnd), title);
+};
+
+update_windows ::= func(-> v0)
+{
+	static if(_win32)
+	{
+		msg ::= WINMSG mut{};
+		if(PeekMessageA(ref msg, 0, 0, 0, 1)@bool)
+		{
+			TranslateMessage(ref msg);
+			DispatchMessageA(ref msg);
+		}
+	}
+	else
+	{
+		__error("update_windows NYI on linux");
+	}
+};
+
+////////////////////
+////////IMPL////////
+////////////////////
+
+static if(_win32)
+{
+	_window_data_t ::= struct
+	{
+		handle : u64;
+		open : bool;
+		win32_placement_cache : WINDOWPLACEMENT;
+	};
+}
+else
+{
+	_window_data_t ::= struct
+	{
+		handle : u64;
+		open : bool;
+	};
+}
+
+_window_data : _window_data_t mut? mut := zero;
+_window_count : u64 mut := zero;
+_window_cap : u64 mut := zero;
+
+_close_window ::= func(wndh : u64 -> v0)
+{
+	wndptr ::= _window_data # wndh;
+	wndptr->open = false;
+	DestroyWindow(wndptr->handle@s64 weak);
+};
+
+_no_windows_left ::= func(-> bool)
+{
+	i : u64 mut;
+	for(i = 0, i < _window_count, i = i + 1)
+	{
+		if(window_is_open(i@window))
+		{
+			return false;
+		}
+	}
+	return true;
+};
+
+static if(_win32)
+{
+	wndproc ::= func(hwnd : u64, msg : u32, wparam : u64, lparam : s64 -> s64)
+	{
+		if(msg == 16) // WM_CLOSE
+		{
+			_close_window(GetWindowLongPtrA(hwnd, -21)@u64);
+			return 0;
+		}
+		if(msg == 2) // WM_DESTROY
+		{
+			if(_no_windows_left())
+			{
+				PostQuitMessage(0);
+				return 0;
+			}
+		}
+		return DefWindowProcA(hwnd, msg, wparam, lparam);
+	};
+
+	wndclass_name ::= "Topaz";
+	wndclass_registered : bool mut := false;
+
+	_register_wndclass ::= func(-> v0)
+	{
+		hinst ::= GetModuleHandleA(zero);
+		magic_int_resource ::= (32512@u64)@u8?;
+		COLOR_WINDOW ::= 5;
+		window_class ::= WNDCLASSEXA
+		{
+			.cbSize := __sizeof(WNDCLASSEXA);
+			.style := 43;
+			.wndproc := wndproc;
+			.cbClsExtra := __sizeof(u64);
+			.cbWndExtra := 0;
+			.hInstance := hinst;
+			.hIcon := LoadIconA(0, magic_int_resource);
+			.hCursor := LoadCursorA(0, magic_int_resource);
+			.hbrBackground := COLOR_WINDOW + 1;
+			.lpszMenuName := zero;
+			.lpszClassName := wndclass_name;
+			.hIconSm := LoadIconA(0, magic_int_resource);
+		};
+		if(RegisterClassExA(ref window_class) == 0)
+		{
+			putzstr("failed to register window class: ");
+			putuint(GetLastError());
+			__debugbreak();
+		}
+		wndclass_registered = true;
+	};
+}
