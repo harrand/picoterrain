@@ -1,0 +1,570 @@
+math_pi ::= 3.14159;
+math_tau ::= 6.28319;
+math_e ::= 2.71828;
+
+rand_seed : s64 mut := zero;
+rand_a ::= 69420;
+rand_c ::= 94385739487;
+rand_mod ::= 934759834765;
+srand ::= func(seed : s64 -> v0)
+{
+	rand_seed = seed;
+};
+
+rand ::= func(-> s64)
+{
+	// random number between 0 and rand_mod
+	rand_seed = (rand_seed * rand_a);
+	rand_seed = (rand_seed + rand_c);
+	rand_seed = (rand_seed % (rand_mod@_));
+	return rand_seed;
+};
+
+randf ::= func(-> f32)
+{
+	// random float between -1.0 and 1.0
+	return ((rand()@f32 / (rand_mod@f32)) * 2.0) - 1.0;
+};
+
+sin_maclaurin ::= func(x : f64, terms : u64 -> f64)
+{
+	term : f64 mut := x;
+	sum : f64 mut := term;
+	n : u64 mut;
+	for(n = 1, n < terms, n = n + 1)
+	{
+		term = term * (-x * x / ((2 * n) * (2 * n + 1)));
+		sum = sum + term;
+	}
+
+	return sum;
+};
+
+sin ::= func(v : f64 weak -> f64 weak)
+{
+	mul ::= (v / math_tau)@s32;
+	if((mul >= 1) || (mul <= -1))
+	{
+		return sin_maclaurin(v - (mul@f64 * math_tau), 10);
+	}
+	return sin_maclaurin(v, 10);
+};
+
+cos_maclaurin ::= func(x : f64, terms : u64 -> f64)
+{
+	term : f64 mut := 1.0;
+	sum : f64 mut := term;
+	n : u64 mut;
+	for(n = 1, n < terms, n = n + 1)
+	{
+		term = term * (-x * x / ((2 * n - 1) * (2 * n)));
+		sum = sum + term;
+	}
+	return sum;
+};
+
+cos ::= func(v : f64 weak -> f64 weak)
+{
+	mul ::= (v / math_tau)@s32;
+	if((mul >= 1) || (mul <= -1))
+	{
+		return cos_maclaurin(v - (mul@f64 * math_tau), 10);
+	}
+	return cos_maclaurin(v, 10);
+};
+
+asin_maclaurin ::= func(x : f64, terms : u64 -> f64)
+{
+	term : f64 mut := x;
+	sum : f64 mut := term;
+	n : u64 mut;
+	for(n = 1, n < terms, n = n + 1)
+	{
+		// term *= ((2n - 1)^2 * x^2) / ((2n) * (2n + 1))
+		num : f64 := (2.0 * n - 1.0);
+		denom : f64 := (2.0 * n) * (2.0 * n + 1.0);
+		term = term * (num * num * x * x / denom);
+		sum = sum + term;
+	}
+	return sum;
+};
+
+asin ::= func(x : f64 weak -> f64 weak)
+{
+	return asin_maclaurin(x, 10);
+};
+
+acos ::= func(x : f64 weak -> f64 weak)
+{
+	return (math_pi / 2.0) - asin(x);
+};
+
+fabs ::= func(x : f32 -> f32)
+{
+	if(x < 0.0)
+	{
+		return -x;
+	}
+	return x;
+};
+
+sqrt ::= func(x : f32 -> f32)
+{
+	if(x == 0.0)
+	{
+		return 0.0;
+	}
+	rt : f32 mut := 1;
+	ort : f32 mut := 0;
+	while(fabs(rt - ort) > 0.00001)
+	{
+		ort = rt;
+		rt = (((x / rt) + rt) / 2);
+	}
+	return rt;
+};
+
+// vector operations
+
+vec3_add ::= func(lhs : f32[3], rhs : f32[3] -> f32[3])
+{
+	return f32[3]
+	{
+		deref(lhs # 0) + deref(rhs # 0);
+		deref(lhs # 1) + deref(rhs # 1);
+		deref(lhs # 2) + deref(rhs # 2);
+	};
+};
+
+vec3_mul ::= func(lhs : f32[3], rhs : f32[3] -> f32[3])
+{
+	return f32[3]
+	{
+		deref(lhs # 0) * deref(rhs # 0);
+		deref(lhs # 1) * deref(rhs # 1);
+		deref(lhs # 2) * deref(rhs # 2);
+	};
+};
+
+vec3_scale ::= func(lhs : f32[3], scale : f32 -> f32[3])
+{
+	return f32[3]
+	{
+		deref(lhs # 0) * scale;
+		deref(lhs # 1) * scale;
+		deref(lhs # 2) * scale;
+	};
+};
+
+vec3_cross ::= func(lhs : f32[3], rhs : f32[3] -> f32[3])
+{
+	return f32[3]
+	{
+		// aybz - azby
+		(deref(lhs # 1) * deref(rhs # 2)) - (deref(lhs # 2) * deref(rhs # 1));
+		// azbx - axbz
+		(deref(lhs # 2) * deref(rhs # 0)) - (deref(lhs # 0) * deref(rhs # 2));
+		// axby - aybx
+		(deref(lhs # 0) * deref(rhs # 1)) - (deref(lhs # 1) * deref(rhs # 0));
+	};
+};
+
+vec3_length ::= func(v : f32[3] -> f32)
+{
+	return sqrt(deref(v # 0) * deref(v # 0)) + (deref(v # 1) * deref(v # 1)) + (deref(v # 2) * deref(v # 2));
+};
+
+vec3_normalize ::= func(v : f32[3] -> f32[3])
+{
+	length ::= vec3_length(v);
+	return f32[3]
+	{
+		deref(v # 0) / length;
+		deref(v # 1) / length;
+		deref(v # 2) / length;
+	};
+};
+
+vec4_add ::= func(lhs : f32[4], rhs : f32[4] -> f32[4])
+{
+	return f32[4]
+	{
+		deref(lhs # 0) + deref(rhs # 0);
+		deref(lhs # 1) + deref(rhs # 1);
+		deref(lhs # 2) + deref(rhs # 2);
+		deref(lhs # 3) + deref(rhs # 3);
+	};
+};
+
+vec4_mul ::= func(lhs : f32[4], rhs : f32[4] -> f32[4])
+{
+	return f32[4]
+	{
+		deref(lhs # 0) * deref(rhs # 0);
+		deref(lhs # 1) * deref(rhs # 1);
+		deref(lhs # 2) * deref(rhs # 2);
+		deref(lhs # 3) * deref(rhs # 3);
+	};
+};
+
+vec4_scale ::= func(lhs : f32[4], scale : f32 -> f32[4])
+{
+	return f32[4]
+	{
+		deref(lhs # 0) * scale;
+		deref(lhs # 1) * scale;
+		deref(lhs # 2) * scale;
+		deref(lhs # 3) * scale;
+	};
+};
+
+vec4_length ::= func(v : f32[4] -> f32)
+{
+	return sqrt((deref(v # 0) * deref(v # 0)) + (deref(v # 1) * deref(v # 1)) + (deref(v # 2) * deref(v # 2)) + (deref(v # 3) * deref(v # 3)));
+};
+
+vec4_normalize ::= func(v : f32[4] -> f32[4])
+{
+	length ::= vec4_length(v);
+	return f32[4]
+	{
+		deref(v # 0) / length;
+		deref(v # 1) / length;
+		deref(v # 2) / length;
+		deref(v # 3) / length;
+	};
+};
+
+vec4_dot ::= func(lhs : f32[4], rhs : f32[4] -> f32)
+{
+	return
+		deref(lhs # 0) * deref(rhs # 0)
+		+
+		deref(lhs # 1) * deref(rhs # 1)
+		+
+		deref(lhs # 2) * deref(rhs # 2)
+		+
+		deref(lhs # 3) * deref(rhs # 3);
+};
+
+// quaternions
+
+axis2quat ::= func(axis : f32[3], angle : f32 -> f32[4])
+{
+	sinhalf ::= sin(angle / 2.0);
+	coshalf ::= cos(angle / 2.0);
+	return vec4_normalize(f32[4]
+	{
+		deref(axis # 0) * sinhalf;
+		deref(axis # 1) * sinhalf;
+		deref(axis # 2) * sinhalf;
+		coshalf;
+	});
+};
+
+euler2quat ::= func(euler_angles : f32[3] -> f32[4])
+{
+	qx ::= axis2quat(f32[3]{1.0; 0.0; 0.0;}, deref(euler_angles # 0));
+	qy ::= axis2quat(f32[3]{0.0; 1.0; 0.0;}, deref(euler_angles # 1));
+	qz ::= axis2quat(f32[3]{0.0; 0.0; 1.0;}, deref(euler_angles # 2));
+	
+	return vec4_normalize(quat_mul(quat_mul(qz, qy), qx));
+};
+
+quat_mul ::= func(lhs : f32[4], rhs : f32[4] -> f32[4])
+{
+	// https://github.com/HandmadeMath/HandmadeMath/blob/142ba3cd9da700e3e599d301bbd27d415ad14626/HandmadeMath.h#L2217
+	lx ::= deref(lhs # 0);
+	ly ::= deref(lhs # 1);
+	lz ::= deref(lhs # 2);
+	lw ::= deref(lhs # 3);
+	rx ::= deref(rhs # 0);
+	ry ::= deref(rhs # 1);
+	rz ::= deref(rhs # 2);
+	rw ::= deref(rhs # 3);
+
+	return f32[4]
+	{
+		( rw *  lx) + ( rz *  ly) + ( ry * -lz) + ( rx *  lw);
+		( rz * -lx) + ( rw *  ly) + ( rx *  lz) + ( ry *  lw);
+		( ry *  lx) + ( rx * -ly) + ( rw *  lz) + ( rz *  lw);
+		( rx * -lx) + ( ry * -ly) + ( rz * -lz) + ( rw *  lw);
+	};
+};
+
+quat_rotate ::= func(q : f32[4], pos : f32[3] -> f32[3])
+{
+	// https://github.com/HandmadeMath/HandmadeMath/blob/142ba3cd9da700e3e599d301bbd27d415ad14626/HandmadeMath.h#L2638
+	xyz ::= f32[3]{deref(q # 0); deref(q # 1); deref(q # 2);};
+	t ::= vec3_scale(vec3_cross(xyz, pos), 2.0);
+	return vec3_add(pos, vec3_add(vec3_scale(t, deref(q # 3)), vec3_cross(xyz, t)));
+};
+
+quat_inverse ::= func(q : f32[4] -> f32[4])
+{
+	// https://github.com/HandmadeMath/HandmadeMath/blob/142ba3cd9da700e3e599d301bbd27d415ad14626/HandmadeMath.h#L2313
+	dotself ::= vec4_dot(q, q);
+	return f32[4]
+	{
+		-deref(q # 0) / dotself;
+		-deref(q # 1) / dotself;
+		-deref(q # 2) / dotself;
+		deref(q # 3) / dotself;
+	};
+};
+
+quat_mix ::= func(lhs : f32[4], mix_left : f32, rhs : f32[4], mix_right : f32 -> f32[4])
+{
+	// https://github.com/HandmadeMath/HandmadeMath/blob/142ba3cd9da700e3e599d301bbd27d415ad14626/HandmadeMath.h#L2353
+	lx ::= deref(lhs # 0);
+	ly ::= deref(lhs # 1);
+	lz ::= deref(lhs # 2);
+	lw ::= deref(lhs # 3);
+	rx ::= deref(rhs # 0);
+	ry ::= deref(rhs # 1);
+	rz ::= deref(rhs # 2);
+	rw ::= deref(rhs # 3);
+
+	return f32[4]
+	{
+		(lx * mix_left) + (rx * mix_right);
+		(ly * mix_left) + (ry * mix_right);
+		(lz * mix_left) + (rz * mix_right);
+		(lw * mix_left) + (rw * mix_right);
+	};
+};
+
+quat_nlerp ::= func(lhs : f32[4], rhs : f32[4], factor : f32 -> f32[4])
+{
+	// https://github.com/HandmadeMath/HandmadeMath/blob/142ba3cd9da700e3e599d301bbd27d415ad14626/HandmadeMath.h#L2367
+	return vec4_normalize(quat_mix(lhs, 1.0 - factor, rhs, factor));
+};
+
+quat_slerp ::= func(lhs : f32[4], rhs : f32[4], factor : f32 -> f32[4])
+{
+	// https://github.com/HandmadeMath/HandmadeMath/blob/142ba3cd9da700e3e599d301bbd27d415ad14626/HandmadeMath.h#L2378
+	left : f32[4] mut := lhs;
+	right : f32[4] mut := rhs;
+
+	cos_theta : f32 mut := vec4_dot(lhs, rhs);
+	if(cos_theta < 0.0)
+	{
+		cos_theta = -cos_theta;
+		right = vec4_scale(right, -1.0);
+	}
+
+	if(cos_theta > 0.99995)
+	{
+		return quat_nlerp(left, right, factor);
+	}
+	theta ::= acos(cos_theta);
+	mix_left ::= sin((1.0 - factor) * theta);
+	mix_right ::= sin(factor * theta);
+	// pretty sure these 2 are equivalent and the code in handmade math is unnecessarily garbled (same results)
+	return quat_nlerp(left, right, mix_right);
+	//return vec4_normalize(quat_mix(left, mix_left, right, mix_right));
+};
+
+// pure rotation mats only. right-handed coordinate system
+mat2quat ::= func(m : f32[16] -> f32[4])
+{
+	x ::= deref(m # 0); // m[0][0]
+	y ::= deref(m # 5); // m[1][1]
+	z ::= deref(m # 10); // m[2][2]
+	w ::= deref(m # 15); // m[3][3]
+
+	q : f32[4] mut;
+	t : f32 mut;
+	if(z < 0.0)
+	{
+		if(z > y)
+		{
+			t = (1.0 + x - y - z);
+			q = f32[4]
+			{
+				t;
+				deref(m # 4) + deref(m # 1);
+				deref(m # 2) + deref(m # 8);
+				deref(m # 9) - deref(m # 6);
+			};
+		}
+		else
+		{
+			t = (1.0 - x + y - z);
+			q = f32[4]
+			{
+				deref(m # 4) + deref(m # 1);
+				t;
+				deref(m # 9) + deref(m # 6);
+				deref(m # 2) - deref(m # 8);
+			};
+		}
+	}
+	else
+	{
+		if(x < -y)
+		{
+			t = (1.0 - x - y + z);
+			q = f32[4]
+			{
+				deref(m # 2) + deref(m # 8);
+				deref(m # 9) + deref(m # 6);
+				t;
+				deref(m # 4) - deref(m # 1);
+			};
+		}
+		else
+		{
+			t = (1.0 + x + y + z);
+			q = f32[4]
+			{
+				deref(m # 9) - deref(m # 6);
+				deref(m # 2) - deref(m # 8);
+				deref(m # 4) - deref(m # 1);
+				t;
+			};
+		}
+	}
+	return vec4_scale(q, 0.5 / sqrt(t));
+};
+
+// matrix operations
+
+quat2mat ::= func(quat : f32[4] -> f32[16])
+{
+	// https://github.com/HandmadeMath/HandmadeMath/blob/142ba3cd9da700e3e599d301bbd27d415ad14626/HandmadeMath.h#L2407
+	q ::= vec4_normalize(quat);
+	xx ::= deref(q # 0) * deref(q # 0);
+	yy ::= deref(q # 1) * deref(q # 1);
+	zz ::= deref(q # 2) * deref(q # 2);
+	xy ::= deref(q # 0) * deref(q # 1);
+	xz ::= deref(q # 0) * deref(q # 2);
+	yz ::= deref(q # 1) * deref(q # 2);
+	wx ::= deref(q # 3) * deref(q # 0);
+	wy ::= deref(q # 3) * deref(q # 1);
+	wz ::= deref(q # 3) * deref(q # 2);
+
+	// [1][0] == 1 and [0][1] == 4 as column major
+	return f32[16]
+	{
+		1.0 - (2.0 * (yy + zz));
+		2.0 * (xy - wz);
+		2.0 * (xz + wy);
+		0.0;
+
+		2.0 * (xy + wz);
+		1.0 - (2.0 * (xx + zz));
+		2.0 * (yz - wx);
+		0.0;
+
+		2.0 * (xz - wy);
+		2.0 * (yz + wx);
+		1.0 - (2.0 * (xx + yy));
+		0.0;
+		
+		0.0;
+		0.0;
+		0.0;
+		1.0;
+	};
+};
+
+mat3_iden ::= func(-> f32[9])
+{
+	return f32[9]
+	{
+		1.0; 0.0; 0.0;
+		0.0; 1.0; 0.0;
+		0.0; 0.0; 1.0;
+	};
+};
+
+mat4_iden ::= func(-> f32[16])
+{
+	return f32[16]
+	{
+		1.0; 0.0; 0.0; 0.0;
+		0.0; 1.0; 0.0; 0.0;
+		0.0; 0.0; 1.0; 0.0;
+		0.0; 0.0; 0.0; 1.0;
+	};
+};
+
+mat4_scale ::= func(m : f32[16], scale : f32 -> f32[16])
+{
+	ret : f32 mut[16];
+	i : u64 mut;
+	for(i = 0, i < 16, i = i + 1)
+	{
+		deref(ret # i) = (deref(m # i) * scale);
+	}
+	return ret;
+};
+
+// trs operations
+
+trs ::= struct
+{
+	t : f32 mut[3];
+	r : f32 mut[4];
+	s : f32 mut[3];
+};
+
+trs_iden ::= func(-> trs)
+{
+	return trs
+	{
+		.t := f32[3]{0.0; 0.0; 0.0;};
+		.r := f32[4]{0.0; 0.0; 0.0; 1.0;};
+		.s := f32[3]{1.0; 1.0; 1.0;};
+	};
+};
+
+trs_combine ::= func(lhs : trs, rhs : trs -> trs)
+{
+	return trs
+	{
+		.t := vec3_add(rhs.t, vec3_mul(rhs.s, quat_rotate(rhs.r, lhs.t)));
+		.r := vec4_normalize(quat_mul(rhs.r, lhs.r));
+		.s := vec3_mul(lhs.s, rhs.s);
+	};
+};
+
+mat2trs ::= func(mat : f32[16] -> trs)
+{
+	// i expect to be given a model-matrix equivalent (e.g product of translate * rotate * scale matrices)
+	// scale can be non-uniform but breaks if shear exists.
+	ret : trs mut;
+	ret.t = f32[3]{deref(mat # 12); deref(mat # 13); deref(mat # 14);};
+	// translation component doesnt mix with anything else so im not zeroing them out
+	sx ::= sqrt((deref(mat # 0) * deref(mat # 0)) + (deref(mat # 1) * deref(mat # 1)) + (deref(mat #  2) * deref(mat #  2)));
+	sy ::= sqrt((deref(mat # 4) * deref(mat # 4)) + (deref(mat # 5) * deref(mat # 5)) + (deref(mat #  6) * deref(mat #  6)));
+	sz ::= sqrt((deref(mat # 8) * deref(mat # 8)) + (deref(mat # 9) * deref(mat # 9)) + (deref(mat # 10) * deref(mat # 10)));
+	s ::= f32[3]{sx; sy; sz;};
+	ret.s = s;
+	// divide out scale to get our rotational matrix
+    rot_mat : f32 mut[16];
+    // Column 0
+    deref(rot_mat # 0) = (deref(mat # 0) / sx);
+    deref(rot_mat # 1) = (deref(mat # 1) / sx);
+    deref(rot_mat # 2) = (deref(mat # 2) / sx);
+    deref(rot_mat # 3) = 0.0;
+    // Column 1
+    deref(rot_mat # 4) = (deref(mat # 4) / sy);
+    deref(rot_mat # 5) = (deref(mat # 5) / sy);
+    deref(rot_mat # 6) = (deref(mat # 6) / sy);
+    deref(rot_mat # 7) = 0.0;
+    // Column 2
+    deref(rot_mat # 8) = (deref(mat # 8) / sz);
+    deref(rot_mat # 9) = (deref(mat # 9) / sz);
+    deref(rot_mat # 10) = (deref(mat # 10) / sz);
+    deref(rot_mat # 11) = 0.0;
+    // Column 3 (homogeneous)
+    deref(rot_mat # 12) = 0.0; 
+    deref(rot_mat # 13) = 0.0; 
+    deref(rot_mat # 14) = 0.0; 
+    deref(rot_mat # 15) = 1.0;
+
+	ret.r = mat2quat(rot_mat);
+	return ret;
+};
