@@ -1,10 +1,30 @@
 == default ==
 {
+	warning("no build config specified - defaulting to debug");
+	debug();
+}
+
+== debug ==
+{
+	set_optimization(0);
+	debug_symbols(true);
+	base();
+}
+
+== release ==
+{
+	set_optimization(3);
+	debug_symbols(false);
+	base();
+}
+
+== base ==
+{
 	set_executable("picoterrain");
 	add_build_file("gpuren/gpu.psy", "default");
 	add_build_file("psystdlib/stdlib.psy", "default");
 	add_source_directory("src");
-	debug_symbols(true);
+	//debug_symbols(true);
 
 	prebuild_command("glslc src/shaders/vtx.glsl -o build/vtx.spv");
 	prebuild_command("glslc src/shaders/frg.glsl -o build/frg.spv");
