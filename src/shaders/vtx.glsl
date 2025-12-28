@@ -71,10 +71,7 @@ void main()
 	// magic numbers go brrrr
 	// increases actual size of terrain (width + breadth)
 	const float scale = 8;
-	// increases height multiplier for all terrain
-	const float yscale = 16;
 	// increases simplex sampler (the higher we go the more zoomed out the noise texture we go)
-	const float roughness = 18;
 
 	vec2 localxz = positions[vtx_id];
 	vec2 xz = (vec2(x, z) + localxz) * scale;
@@ -85,7 +82,7 @@ void main()
 	// generate a uv
 	vec2 uv = xz / vec2(plane_subdivide_x * scale, plane_subdivide_y * scale);
 
-	const float y = max(simplex(uv_apply_seed(uv * roughness)) * yscale, terrain.data.sea_level);
+	const float y = max(simplex(uv_apply_seed(uv * terrain.data.roughness)) * terrain.data.y_scale, terrain.data.sea_level);
 	height = y;
 	
 	// todo: xd remove le epic hardcoded aspect ratio
