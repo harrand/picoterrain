@@ -26,6 +26,22 @@ randf ::= func(-> f32)
 	return ((rand()@f32 / (rand_mod@f32)) * 2.0) - 1.0;
 };
 
+flerp ::= func(from : f32, to : f32, f : f32 -> f32)
+{
+	return from * (1.0 - f) + (to * f);
+};
+
+vec3lerp ::= func(from : f32[3], to : f32[3], f : f32 -> f32[3])
+{
+	return f32[3]
+	{
+		flerp(deref(from # 0), deref(to # 0), f);
+		flerp(deref(from # 1), deref(to # 1), f);
+		flerp(deref(from # 2), deref(to # 2), f);
+	};
+};
+
+
 sin_maclaurin ::= func(x : f64, terms : u64 -> f64)
 {
 	term : f64 mut := x;

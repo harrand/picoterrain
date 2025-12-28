@@ -54,14 +54,16 @@ main ::= func(args : program_args? -> s32)
 	camera()->t = f32[3]{0.0; 6.0; 0.0;};
 	camera()->r = euler2quat(zero);
 
-	terrain_randomise(seed);
+	srand(seed);
+	set_terrain(get_random_terrain());
+	camera()->t = f32[3]{0.0; terrain()->sky_level; 0.0;};
 
 	while(window_is_open(main_window))
 	{
 		control();
 		arena_clear(frame_arena);
 		render();
-		update_x();
+		update_terrain();
 		update_windows();
 	}
 	return 0;

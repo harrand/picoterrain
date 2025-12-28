@@ -23,12 +23,49 @@ get_random_terrain ::= func(-> terrain_data)
 	};
 };
 
+randomise_time_begin : s64 mut := zero;
+is_randomising : bool mut := false;
+old_terrain : terrain_data mut := zero;
+new_terrain : terrain_data mut := zero;
+
+randomise_duration ::= 5 * 1000000;
+
 terrain_randomise ::= func(seed : s64 -> v0)
 {
+	if(is_randomising)
+	{
+		return;
+	}
+	is_randomising = true;
+	old_terrain = deref terrain();
 	srand(seed);
-	deref(terrain()) = get_random_terrain();
+	new_terrain = get_random_terrain();
+	randomise_time_begin = time_static();
+	//srand(seed);
+	//deref(terrain()) = get_random_terrain();
+	//match_clear_colour_to_terrain();
+	//camera()->t = f32[3]{0.0; terrain()->sky_level; 0.0;};
+};
+
+update_terrain ::= func(-> v0)
+{
+	if(!is_randomising)
+	{
+		return;
+	}
+	diff ::= time_static() - randomise_time_begin;
+	factor ::= diff@f32 / randomise_duration;
+	set_terrain(terrain_lerp(old_terrain, new_terrain, factor));
+	if(factor >= 1.0)
+	{
+		is_randomising = false;
+	}
+};
+
+set_terrain ::= func(t : terrain_data -> v0)
+{
+	deref(terrain()) = t;
 	match_clear_colour_to_terrain();
-	camera()->t = f32[3]{0.0; terrain()->sky_level; 0.0;};
 };
 
 match_clear_colour_to_terrain ::= func(-> v0)
@@ -36,6 +73,25 @@ match_clear_colour_to_terrain ::= func(-> v0)
 	sea ::= terrain()->sea_colour;
 	render_clear_colour(f32[4]{deref(sea # 0); deref(sea # 1); deref(sea # 2); 1.0;});
 };
+
+terrain_lerp ::= func(from : terrain_data, to : terrain_data, factor : f32 -> terrain_data)
+{
+	return terrain_data
+	{
+		.seed := from.seed;
+		.sea_level := flerp(from.sea_level, to.sea_level, factor);
+		.sea_colour := vec3lerp(from.sea_colour, to.sea_colour, factor);
+		.sea_banding := flerp(from.sea_banding, to.sea_banding, factor);
+		.sky_level := flerp(from.sky_level, to.sky_level, factor);
+		.sky_colour := vec3lerp(from.sky_colour, to.sky_colour, factor);
+		.sky_banding := flerp(from.sky_banding, to.sky_banding, factor);
+		.base_colour := vec3lerp(from.base_colour, to.base_colour, factor);
+		.xz_scale := flerp(from.xz_scale, to.xz_scale, factor);
+		.y_scale := flerp(from.y_scale, to.y_scale, factor);
+		.roughness := flerp(from.roughness, to.roughness, factor);
+	};
+};
+
 
 terrain_data ::= struct
 {
