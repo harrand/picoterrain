@@ -6,19 +6,23 @@ terrain ::= func(-> terrain_data mut?)
 terrain_randomise ::= func(seed : s64 -> v0)
 {
 	srand(seed);
+	sea ::= f32[3]{(randf() + 1.0) * 0.5; (randf() + 1.0) * 0.5; (randf() + 1.0) * 0.5;};
 	deref(terrain()) = terrain_data
 	{
 		.seed := (rand() % 10000)@_;
 		// dont make this too high
 		// between -0.2 and 0.2 lets say
-		.sea_level := randf() * 0.01;
-		.sea_colour := f32[3]{(randf() + 1.0) * 0.5; (randf() + 1.0) * 0.5; (randf() + 1.0) * 0.5;};
-		.sea_banding := randf() * 0.5;
+		.sea_level := 0.1 + (randf() * 0.2);
+		.sea_colour := sea;
+		.sea_banding := randf() * 0.1;
+		.sky_level := (((randf() + 1.0) * 25.0) + 2)@_;
+		.sky_colour := f32[3]{(randf() + 1.0) * 0.5; (randf() + 1.0) * 0.5; (randf() + 1.0) * 0.5;};
+		.sky_level := (((randf() + 1.0) * 25.0) + 2)@_;
 		.base_colour := f32[3]{(randf() + 1.0) * 0.5; (randf() + 1.0) * 0.5; (randf() + 1.0) * 0.5;};
+		.xz_scale := (2 + (rand() % 16))@_;
 		.y_scale := 4 + (rand() % 32)@_;
-		.roughness := 2 + (rand() % 32)@_;
+		.roughness := 2 + (rand() % 1024)@_;
 	};
-	sea ::= terrain()->sea_colour;
 	render_clear_colour(f32[4]{deref(sea # 0); deref(sea # 1); deref(sea # 2); 1.0;});
 };
 
@@ -32,8 +36,14 @@ terrain_data ::= struct
 	// between (sea_level + sea_banding) and (sea_level), the colour lerps towards sea_colour
 	// is sand called sand because its between the sea and the land?
 	sea_banding : f32;
+
+	sky_level : f32;
+	sky_colour : f32[3];
+	sky_banding : f32;
+
 	base_colour : f32[3];
 
+	xz_scale : f32;
 	y_scale : f32;
 	roughness : f32;
 };

@@ -19,7 +19,12 @@ void main()
 		float interp = clamp((terrain.sea_level + terrain.sea_banding - height) / terrain.sea_banding, 0.0, 1.0);
 		col = mix(col, terrain.sea_colour, interp);
 	}
+	else if(height >= (terrain.sky_level - terrain.sky_banding))
+	{
+		float interp = clamp((height - (terrain.sky_level - terrain.sky_banding)) / terrain.sky_banding, 0.0, 1.0);
+		col = mix(col, terrain.sky_colour, interp);
+	}
 	// very slightly brighten the colour by the height
-	col += vec3(height * 0.02);
+	col += vec3(height * 0.004);
 	fcol = vec4(col, 1.0);
 }

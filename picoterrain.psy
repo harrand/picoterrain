@@ -54,7 +54,11 @@ main ::= func(args : program_args? -> s32)
 		.sea_level := 0.1;
 		.sea_colour := f32[3]{0.3; 0.4; 0.9;};
 		.sea_banding := 0.9;
+		.sky_level := 30.0;
+		.sky_colour := f32[3]{1.0; 1.0; 1.0;};
+		.sky_banding := 30.0;
 		.base_colour := f32[3]{0.2; 0.7; 0.1;};
+		.xz_scale := 8;
 		.y_scale := 18;
 		.roughness := 18;
 	};
