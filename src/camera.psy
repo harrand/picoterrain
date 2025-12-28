@@ -12,11 +12,50 @@ camera ::= func(-> camera_data mut?)
 camera_move_forward ::= func(speed : f32 -> v0)
 {
 	cam ::= camera();
-	inverse_rotation ::= quat_inverse(cam->r);
+	rot : f32 mut[4] := cam->r;
+	deref(rot # 3) = (-deref(rot # 3));
+	inverse_rotation ::= quat_inverse(rot);
 	cam->t = vec3_add(cam->t, quat_rotate(inverse_rotation, f32[3]{0.0; 0.0; -speed;}));
 };
 
 camera_move_backward ::= func(speed : f32 -> v0)
 {
 	camera_move_forward(-speed);
+};
+
+camera_move_left ::= func(speed : f32 -> v0)
+{
+	cam ::= camera();
+	// only god knows why inverting the w component is necessary
+	rot : f32 mut[4] := cam->r;
+	deref(rot # 3) = (-deref(rot # 3));
+	inverse_rotation ::= quat_inverse(rot);
+	cam->t = vec3_add(cam->t, quat_rotate(inverse_rotation, f32[3]{-speed; 0.0; 0.0;}));
+};
+
+camera_move_right ::= func(speed : f32 -> v0)
+{
+	camera_move_left(-speed);
+};
+
+camera_rotate_left ::= func(amt : f32 -> v0)
+{
+	cam ::= camera();
+	cam->r = vec4_normalize(quat_mul(cam->r, axis2quat(f32[3]{0.0; 1.0; 0.0;}, amt)));
+};
+
+camera_rotate_right ::= func(amt : f32 -> v0)
+{
+	camera_rotate_left(-amt);
+};
+
+camera_rotate_up ::= func(amt : f32 -> v0)
+{
+	cam ::= camera();
+	cam->r = vec4_normalize(quat_mul(cam->r, axis2quat(f32[3]{1.0; 0.0; 0.0;}, amt)));
+};
+
+camera_rotate_down ::= func(amt : f32 -> v0)
+{
+	camera_rotate_up(-amt);
 };

@@ -1,5 +1,13 @@
+control_last_mpos : u32[2] mut := zero;
 control ::= func(-> v0)
 {
+	control_pos ::= mouse_position();
+	delta ::= f32[2]{
+		(deref(control_pos # 0)@f32) - (deref(control_last_mpos # 0)@f32);
+		(deref(control_pos # 1)@f32) - (deref(control_last_mpos # 1)@f32);
+	};
+	control_last_mpos = control_pos;
+
 	// keyboard/mouse control
 	if(!window_has_focus(main_window))
 	{
@@ -19,4 +27,14 @@ control ::= func(-> v0)
 	{
 		camera_move_backward(speed);
 	}
+	if(is_key_down(key.a))
+	{
+		camera_move_left(speed);
+	}
+	if(is_key_down(key.d))
+	{
+		camera_move_right(speed);
+	}
+	camera_rotate_right(deref(delta # 0) * 0.01);
+	camera_rotate_down(deref(delta # 1) * 0.01);
 };
