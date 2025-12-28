@@ -38,6 +38,9 @@ The application should open a fullscreen window. A random plane of terrain shoul
 - The camera rotation is controlled with your mouse. Not DPI aware so the user experience might be awful.
 - Pressing 'r' will cause the terrain to randomise.
 - Pressing 'esc' will close the application.
+- Pressing '1' will change the terrain to Grassy Islands.
+- Pressing '2' will change the terrain to Lava Landscape.
+- Pressing '3' will change the terrain to Frosty Shelves.
 
 ### Passing in a seed
 

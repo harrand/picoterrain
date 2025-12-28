@@ -30,7 +30,7 @@ new_terrain : terrain_data mut := zero;
 
 randomise_duration ::= 5 * 1000000;
 
-terrain_randomise ::= func(seed : s64 -> v0)
+terrain_start_changing_to ::= func(t : terrain_data -> v0)
 {
 	if(is_randomising)
 	{
@@ -38,13 +38,21 @@ terrain_randomise ::= func(seed : s64 -> v0)
 	}
 	is_randomising = true;
 	old_terrain = deref terrain();
-	srand(seed);
-	new_terrain = get_random_terrain();
-	randomise_time_begin = time_static();
+	new_terrain = t;
 	//srand(seed);
-	//deref(terrain()) = get_random_terrain();
-	//match_clear_colour_to_terrain();
-	//camera()->t = f32[3]{0.0; terrain()->sky_level; 0.0;};
+	//new_terrain = get_random_terrain();
+	randomise_time_begin = time_static();
+};
+
+
+terrain_randomise ::= func(seed : s64 -> v0)
+{
+	if(is_randomising)
+	{
+		return;
+	}
+	srand(seed);
+	terrain_start_changing_to(get_random_terrain());
 };
 
 update_terrain ::= func(-> v0)
