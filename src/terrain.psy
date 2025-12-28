@@ -55,7 +55,7 @@ update_terrain ::= func(-> v0)
 	}
 	diff ::= time_static() - randomise_time_begin;
 	factor ::= diff@f32 / randomise_duration;
-	set_terrain(terrain_lerp(old_terrain, new_terrain, factor));
+	set_terrain(terrain_coserp(old_terrain, new_terrain, factor));
 	if(factor >= 1.0)
 	{
 		is_randomising = false;
@@ -92,6 +92,23 @@ terrain_lerp ::= func(from : terrain_data, to : terrain_data, factor : f32 -> te
 	};
 };
 
+terrain_coserp ::= func(from : terrain_data, to : terrain_data, factor : f32 -> terrain_data)
+{
+	return terrain_data
+	{
+		.seed := from.seed;
+		.sea_level := fcoserp(from.sea_level, to.sea_level, factor);
+		.sea_colour := vec3coserp(from.sea_colour, to.sea_colour, factor);
+		.sea_banding := fcoserp(from.sea_banding, to.sea_banding, factor);
+		.sky_level := fcoserp(from.sky_level, to.sky_level, factor);
+		.sky_colour := vec3coserp(from.sky_colour, to.sky_colour, factor);
+		.sky_banding := fcoserp(from.sky_banding, to.sky_banding, factor);
+		.base_colour := vec3coserp(from.base_colour, to.base_colour, factor);
+		.xz_scale := fcoserp(from.xz_scale, to.xz_scale, factor);
+		.y_scale := fcoserp(from.y_scale, to.y_scale, factor);
+		.roughness := fcoserp(from.roughness, to.roughness, factor);
+	};
+};
 
 terrain_data ::= struct
 {

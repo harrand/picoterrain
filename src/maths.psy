@@ -26,9 +26,17 @@ randf ::= func(-> f32)
 	return ((rand()@f32 / (rand_mod@f32)) * 2.0) - 1.0;
 };
 
+// floating point linear interpolation
 flerp ::= func(from : f32, to : f32, f : f32 -> f32)
 {
 	return from * (1.0 - f) + (to * f);
+};
+
+// floating point cosine interpolation
+fcoserp ::= func(from : f32, to : f32, f : f32 -> f32)
+{
+	t ::= (1.0 - cos(f * math_pi)) * 0.5;
+	return (from * (1.0 - t)) + (to * t);
 };
 
 vec3lerp ::= func(from : f32[3], to : f32[3], f : f32 -> f32[3])
@@ -41,6 +49,15 @@ vec3lerp ::= func(from : f32[3], to : f32[3], f : f32 -> f32[3])
 	};
 };
 
+vec3coserp ::= func(from : f32[3], to : f32[3], f : f32 -> f32[3])
+{
+	return f32[3]
+	{
+		fcoserp(deref(from # 0), deref(to # 0), f);
+		fcoserp(deref(from # 1), deref(to # 1), f);
+		fcoserp(deref(from # 2), deref(to # 2), f);
+	};
+};
 
 sin_maclaurin ::= func(x : f64, terms : u64 -> f64)
 {
