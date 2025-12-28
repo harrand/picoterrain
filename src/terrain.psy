@@ -12,14 +12,14 @@ get_random_terrain ::= func(-> terrain_data)
 		// between -0.2 and 0.2 lets say
 		.sea_level := 0.1 + (randf() * 0.2);
 		.sea_colour := f32[3]{(randf() + 1.0) * 0.5; (randf() + 1.0) * 0.5; (randf() + 1.0) * 0.5;};
-		.sea_banding := randf() * 0.1;
-		.sky_level := (((randf() + 1.0) * 25.0) + 2)@_;
+		.sea_banding := randf() + 1.0;
+		.sky_level := ((randf() + 1.0) * 50.0)@_;
 		.sky_colour := f32[3]{(randf() + 1.0) * 0.5; (randf() + 1.0) * 0.5; (randf() + 1.0) * 0.5;};
-		.sky_banding := (((randf() + 1.0) * 25.0) + (randf() + 1.0))@_;
+		.sky_banding := (randf() + 1.0) * 10.0;
 		.base_colour := f32[3]{(randf() + 1.0) * 0.5; (randf() + 1.0) * 0.5; (randf() + 1.0) * 0.5;};
-		.xz_scale := (2 + (rand() % 16))@_;
-		.y_scale := 4 + (rand() % 32)@_;
-		.roughness := 2 + (rand() % 1024)@_;
+		.xz_scale := (2.0 + (rand() % 16))@_;
+		.y_scale := 4 + ((rand()) % 32)@_;
+		.roughness := 1 + ((rand()) % 200)@_;
 	};
 };
 
@@ -51,6 +51,10 @@ terrain_randomise ::= func(seed : s64 -> v0)
 	{
 		return;
 	}
+	putzstr("seed: ");
+	putsint(seed);
+	putchar(10);
+
 	srand(seed);
 	terrain_start_changing_to(get_random_terrain());
 };
