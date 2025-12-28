@@ -61,6 +61,7 @@ main ::= func(args : program_args? -> s32)
 		control();
 		arena_clear(frame_arena);
 		render();
+		update_x();
 		update_windows();
 	}
 	return 0;

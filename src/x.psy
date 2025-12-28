@@ -1,0 +1,84 @@
+tripping_out_begin : s64 mut := zero;
+is_tripping_out : bool mut := false;
+pre_tripout_terrain : terrain_data mut := zero;
+trippy_terrain : terrain_data mut := zero;
+
+trip_duration ::= 30 * 1000000;
+sober_delay ::= 5 * 1000000;
+
+press_x ::= func(-> v0)
+{
+	if(is_tripping_out)
+	{
+		return;
+	}
+	// eat a mushroom. im sure it doesnt have any psychedelic properties!
+	is_tripping_out = true;
+	tripping_out_begin = time_static();
+	pre_tripout_terrain = deref(terrain());
+	trippy_terrain = get_random_terrain();
+};
+
+flerp ::= func(from : f32, to : f32, f : f32 -> f32)
+{
+	return from * (1.0 - f) + (to * f);
+};
+
+vec3lerp ::= func(from : f32[3], to : f32[3], f : f32 -> f32[3])
+{
+	return f32[3]
+	{
+		flerp(deref(from # 0), deref(to # 0), f);
+		flerp(deref(from # 1), deref(to # 1), f);
+		flerp(deref(from # 2), deref(to # 2), f);
+	};
+};
+
+terrain_lerp ::= func(from : terrain_data, to : terrain_data, factor : f32 -> terrain_data)
+{
+	return terrain_data
+	{
+		.seed := from.seed;
+		.sea_level := flerp(from.sea_level, to.sea_level, factor);
+		.sea_colour := vec3lerp(from.sea_colour, to.sea_colour, factor);
+		.sea_banding := flerp(from.sea_banding, to.sea_banding, factor);
+		.sky_level := flerp(from.sky_level, to.sky_level, factor);
+		.sky_colour := vec3lerp(from.sky_colour, to.sky_colour, factor);
+		.sky_banding := flerp(from.sky_banding, to.sky_banding, factor);
+		.base_colour := vec3lerp(from.base_colour, to.base_colour, factor);
+		.xz_scale := flerp(from.xz_scale, to.xz_scale, factor);
+		.y_scale := flerp(from.y_scale, to.y_scale, factor);
+		.roughness := flerp(from.roughness, to.roughness, factor);
+	};
+};
+
+update_x ::= func(-> v0)
+{
+	if(!is_tripping_out)
+	{
+		return;
+	}
+
+	diff ::= time_static() - tripping_out_begin;
+	if(diff > (trip_duration + sober_delay))
+	{
+		is_tripping_out = false;
+		deref(terrain()) = pre_tripout_terrain;
+		return;
+	}
+	if(diff > trip_duration)
+	{
+		// start sobering up
+		factor : f32 mut := (diff - trip_duration)@f32 / sober_delay;
+		if(factor > 1.0)
+		{
+			factor = 1.0;
+		}
+		deref(terrain()) = terrain_lerp(trippy_terrain, pre_tripout_terrain, factor);
+		match_clear_colour_to_terrain();
+		return;
+	}
+	real_factor ::= diff@f32 / trip_duration;
+	deref(terrain()) = terrain_lerp(pre_tripout_terrain, trippy_terrain, real_factor);
+	match_clear_colour_to_terrain();
+};

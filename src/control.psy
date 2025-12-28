@@ -55,6 +55,11 @@ control ::= func(-> v0)
 	{
 		terrain_randomise(rand());
 	}
+	if(is_key_down(key.x))
+	{
+		// DONT DO IT
+		press_x();
+	}
 
 	camera_rotate_right(deref(delta # 0) * 0.01);
 	camera_rotate_down(deref(delta # 1) * 0.01);

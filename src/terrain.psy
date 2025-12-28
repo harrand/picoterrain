@@ -3,17 +3,15 @@ terrain ::= func(-> terrain_data mut?)
 	return gpu_resource_pointer(renderer.terrain_buffer).ptr@_;
 };
 
-terrain_randomise ::= func(seed : s64 -> v0)
+get_random_terrain ::= func(-> terrain_data)
 {
-	srand(seed);
-	sea ::= f32[3]{(randf() + 1.0) * 0.5; (randf() + 1.0) * 0.5; (randf() + 1.0) * 0.5;};
-	deref(terrain()) = terrain_data
+	return terrain_data
 	{
 		.seed := (rand() % 10000)@_;
 		// dont make this too high
 		// between -0.2 and 0.2 lets say
 		.sea_level := 0.1 + (randf() * 0.2);
-		.sea_colour := sea;
+		.sea_colour := f32[3]{(randf() + 1.0) * 0.5; (randf() + 1.0) * 0.5; (randf() + 1.0) * 0.5;};
 		.sea_banding := randf() * 0.1;
 		.sky_level := (((randf() + 1.0) * 25.0) + 2)@_;
 		.sky_colour := f32[3]{(randf() + 1.0) * 0.5; (randf() + 1.0) * 0.5; (randf() + 1.0) * 0.5;};
@@ -23,8 +21,20 @@ terrain_randomise ::= func(seed : s64 -> v0)
 		.y_scale := 4 + (rand() % 32)@_;
 		.roughness := 2 + (rand() % 1024)@_;
 	};
-	render_clear_colour(f32[4]{deref(sea # 0); deref(sea # 1); deref(sea # 2); 1.0;});
+};
+
+terrain_randomise ::= func(seed : s64 -> v0)
+{
+	srand(seed);
+	deref(terrain()) = get_random_terrain();
+	match_clear_colour_to_terrain();
 	camera()->t = f32[3]{0.0; terrain()->sky_level; 0.0;};
+};
+
+match_clear_colour_to_terrain ::= func(-> v0)
+{
+	sea ::= terrain()->sea_colour;
+	render_clear_colour(f32[4]{deref(sea # 0); deref(sea # 1); deref(sea # 2); 1.0;});
 };
 
 terrain_data ::= struct
