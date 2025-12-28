@@ -38,6 +38,21 @@ camera_move_right ::= func(speed : f32 -> v0)
 	camera_move_left(-speed);
 };
 
+camera_move_up ::= func(speed : f32 -> v0)
+{
+	cam ::= camera();
+	// only god knows why inverting the w component is necessary
+	rot : f32 mut[4] := cam->r;
+	deref(rot # 3) = (-deref(rot # 3));
+	inverse_rotation ::= quat_inverse(rot);
+	cam->t = vec3_add(cam->t, quat_rotate(inverse_rotation, f32[3]{0.0; speed; 0.0;}));
+};
+
+camera_move_down ::= func(speed : f32 -> v0)
+{
+	camera_move_up(-speed);
+};
+
 camera_rotate_left ::= func(amt : f32 -> v0)
 {
 	cam ::= camera();

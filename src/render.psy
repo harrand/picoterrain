@@ -35,6 +35,7 @@ render_setup ::= func(-> v0)
 		};
 	});
 	gpu_set_present_mode(gpu_present_mode.vsync);	
+	//gpu_set_present_mode(gpu_present_mode.immediate);	
 
 	// create the renderer
 	// 1: shader

@@ -8,8 +8,8 @@
 #include "simplex.glsl"
 #include "terrain.glsl"
 
-#define plane_subdivide_x 64
-#define plane_subdivide_y 64
+#define plane_subdivide_x 128
+#define plane_subdivide_y 128
 
 const vec2 positions[6] = vec2[6](
 	vec2(0.0, 0.0),
@@ -70,11 +70,11 @@ void main()
 
 	// magic numbers go brrrr
 	// increases actual size of terrain (width + breadth)
-	const float scale = 2;
+	const float scale = 8;
 	// increases height multiplier for all terrain
-	const float yscale = 4;
+	const float yscale = 16;
 	// increases simplex sampler (the higher we go the more zoomed out the noise texture we go)
-	const float roughness = 10;
+	const float roughness = 18;
 
 	vec2 localxz = positions[vtx_id];
 	vec2 xz = (vec2(x, z) + localxz) * scale;

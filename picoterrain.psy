@@ -29,8 +29,8 @@ global_arena : arena mut? mut := zero;
 frame_arena_value : arena mut := zero;
 frame_arena : arena mut? mut := zero;
 
-plane_subdivide_x ::= 64;
-plane_subdivide_y ::= 64;
+plane_subdivide_x ::= 128;
+plane_subdivide_y ::= 128;
 
 main ::= func(args : program_args? -> s32)
 {
@@ -39,7 +39,7 @@ main ::= func(args : program_args? -> s32)
 	main_window = window_open(800, 600, "picoterrain", window_flag.maximised | window_flag.bare, global_arena);
 
 	render_setup();
-	render_clear_colour(f32[4]{0.5; 0.6; 0.9; 1.0;});
+	render_clear_colour(f32[4]{0.3; 0.4; 0.9; 1.0;});
 	// birds eye view
 	//camera()->t = f32[3]{0.0; 25.0; 0.0;};
 	//camera()->r = euler2quat(f32[3]{math_pi * -0.5; 0.0; 0.0;});
@@ -52,8 +52,8 @@ main ::= func(args : program_args? -> s32)
 	{
 		.seed := 69422;
 		.sea_level := 0.1;
-		.sea_colour := f32[3]{0.0; 0.0; 1.0;};
-		.sea_banding := 0.5;
+		.sea_colour := f32[3]{0.3; 0.4; 0.9;};
+		.sea_banding := 0.9;
 		.base_colour := f32[3]{0.2; 0.7; 0.1;};
 	};
 

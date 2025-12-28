@@ -3,6 +3,23 @@ terrain ::= func(-> terrain_data mut?)
 	return gpu_resource_pointer(renderer.terrain_buffer).ptr@_;
 };
 
+terrain_randomise ::= func(seed : s64 -> v0)
+{
+	srand(seed);
+	deref(terrain()) = terrain_data
+	{
+		.seed := (rand() % 10000)@_;
+		// dont make this too high
+		// between -0.2 and 0.2 lets say
+		.sea_level := randf() * 0.01;
+		.sea_colour := f32[3]{(randf() + 1.0) * 0.5; (randf() + 1.0) * 0.5; (randf() + 1.0) * 0.5;};
+		.sea_banding := randf() * 0.5;
+		.base_colour := f32[3]{(randf() + 1.0) * 0.5; (randf() + 1.0) * 0.5; (randf() + 1.0) * 0.5;};
+	};
+	sea ::= terrain()->sea_colour;
+	render_clear_colour(f32[4]{deref(sea # 0); deref(sea # 1); deref(sea # 2); 1.0;});
+};
+
 terrain_data ::= struct
 {
 	seed : u32;

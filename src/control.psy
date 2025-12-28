@@ -43,6 +43,19 @@ control ::= func(-> v0)
 	{
 		camera_move_right(speed);
 	}
+	if(is_key_down(key.spacebar))
+	{
+		camera_move_up(speed);
+	}
+	if(is_key_down(key.left_shift))
+	{
+		camera_move_down(speed);
+	}
+	if(is_key_down(key.r))
+	{
+		terrain_randomise(rand());
+	}
+
 	camera_rotate_right(deref(delta # 0) * 0.01);
 	camera_rotate_down(deref(delta # 1) * 0.01);
 };
