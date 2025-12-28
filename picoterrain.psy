@@ -34,6 +34,12 @@ plane_subdivide_y ::= 128;
 
 main ::= func(args : program_args? -> s32)
 {
+	seed : s64 mut := time_static() % 1234;
+	if(args->argc > 1)
+	{
+		seed = parse_int(deref(args->argv # 1));
+	}
+
 	begin_arenas();
 	defer end_arenas();
 	main_window = window_open(800, 600, "picoterrain", window_flag.maximised | window_flag.bare, global_arena);
@@ -48,20 +54,7 @@ main ::= func(args : program_args? -> s32)
 	camera()->t = f32[3]{0.0; 6.0; 0.0;};
 	camera()->r = euler2quat(zero);
 
-	deref(terrain()) = terrain_data
-	{
-		.seed := 69422;
-		.sea_level := 0.1;
-		.sea_colour := f32[3]{0.3; 0.4; 0.9;};
-		.sea_banding := 0.9;
-		.sky_level := 30.0;
-		.sky_colour := f32[3]{1.0; 1.0; 1.0;};
-		.sky_banding := 30.0;
-		.base_colour := f32[3]{0.2; 0.7; 0.1;};
-		.xz_scale := 8;
-		.y_scale := 18;
-		.roughness := 18;
-	};
+	terrain_randomise(seed);
 
 	while(window_is_open(main_window))
 	{
@@ -91,4 +84,112 @@ end_arenas ::= func(-> v0)
 	arena_destroy(global_arena);
 
 	arena_destroy(frame_arena);
+};
+
+isdigit ::= func(ch : u8 -> bool)
+{
+	if(ch >= '0')
+	{
+		if(ch <= '9')
+		{
+			return true;
+		}
+	}
+	return false;
+};
+
+parse_int ::= func(src : u8? -> s64)
+{
+	src_begin : u8? mut := src;
+	len ::= zstrlen(src);
+	begin_cpy ::= src_begin;
+	i : u64 mut := 0;
+
+	sign : s64 mut := 1;
+	if(deref(src_begin) == '-')
+	{
+		sign = -1;
+		src_begin = src_begin # 1;
+		i = i + 1;
+	}
+
+	base : s64 mut := 10;
+	ch : u8 mut;
+	if(deref(src_begin) == '0')
+	{
+		src_begin = src_begin # 1;
+		ch = deref(src_begin);
+		if(ch == 'x')
+		{
+			base = 16;
+			src_begin = src_begin # 1;
+			i = i + 2;
+		}
+		if(ch == 'b')
+		{
+			base = 2;
+			src_begin = src_begin # 1;
+			i = i + 2;
+		}
+	}
+
+	ival : s64 mut := 0;
+	fval : f64 mut := 0;
+
+	digit_val : s64 mut := 0;
+	frac_div : f64 mut := 1.0;
+
+	is_integral : bool mut := true;
+	while(i < len)
+	{
+		ch = deref(begin_cpy # i);
+		if(ch == '.')
+		{
+			is_integral = false;
+		}
+		if(isdigit(ch))
+		{
+			digit_val = (ch - '0')@_;
+		}
+		if(ch >= 'a')
+		{
+			if(ch <= 'f')
+			{
+				digit_val = (10 + (ch - 'a'));
+			}
+		}
+		if(ch >= 'A')
+		{
+			if(ch <= 'F')
+			{
+				digit_val = (10 + (ch - 'A'));
+			}
+		}
+
+		if(digit_val >= base)
+		{
+			return zero;
+		}
+
+		if(is_integral)
+		{
+			ival = ((ival * base) + digit_val);
+		}
+		if(!is_integral)
+		{
+			if(isdigit(ch))
+			{
+				frac_div = (frac_div / (base@f64));
+				fval = (fval + ((digit_val@f64) * frac_div));
+			}
+		}
+
+		i = i + 1;
+	}
+
+	if(is_integral)
+	{
+		return ival * sign;
+	}
+	return (fval + (ival@f64) * (sign@f64))@s64;
 };
