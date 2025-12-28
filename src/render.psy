@@ -98,6 +98,11 @@ render_setup ::= func(-> v0)
 	gpu_graph_add_pass(renderer.graph, renderer.pass, zero, zero, global_arena);
 };
 
+render_clear_colour ::= func(col : f32[4] -> v0)
+{
+	gpu_pass_set_clear_colour(renderer.pass, col);
+};
+
 render ::= func(-> v0)
 {
 	gpu_execute(renderer.graph, global_arena, frame_arena);

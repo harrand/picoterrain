@@ -1,4 +1,6 @@
 control_last_mpos : u32[2] mut := zero;
+is_first_frame : bool mut := true;
+
 control ::= func(-> v0)
 {
 	control_pos ::= mouse_position();
@@ -7,6 +9,12 @@ control ::= func(-> v0)
 		(deref(control_pos # 1)@f32) - (deref(control_last_mpos # 1)@f32);
 	};
 	control_last_mpos = control_pos;
+
+	if(is_first_frame)
+	{
+		is_first_frame = false;
+		return;
+	}
 
 	// keyboard/mouse control
 	if(!window_has_focus(main_window))
