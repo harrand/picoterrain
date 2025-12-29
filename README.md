@@ -2,6 +2,8 @@
 
 Picoterrain is a small application that renders pseudorandom 3d terrain. It is written in the [psy programming language](https://github.com/harrand/psyc).
 
+I made this for the Nathan Baggs code-it-show-it community challenge!
+
 Only 64-bit windows is supported. Your graphics hardware + drivers must support Vulkan 1.3.
 
 ## How it works
