@@ -25,6 +25,14 @@ Run the following command (current working directory **must** be the root direct
 ```
 psyc picoterrain.psy
 ```
+(this uses the default build config, which is a debug build). the below command does the same thing:
+```
+psyc picoterrain.psy -b debug
+```
+and to create a release build (equivalent to -O3 and no debug information):
+```
+psyc picoterrain.psy -b release
+```
 
 If nothing goes wrong, `build/picoterrain.exe` should be spat out.
 
