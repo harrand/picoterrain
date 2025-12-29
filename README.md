@@ -8,9 +8,7 @@ Only 64-bit windows is supported. Your graphics hardware + drivers must support 
 
 <img width="1605" height="1037" alt="image" src="https://github.com/user-attachments/assets/a59c3bbd-573a-4263-9075-e2446f5ce491" />
 <img width="1198" height="770" alt="image" src="https://github.com/user-attachments/assets/90bd619c-e421-4c8b-9848-a8c9d0b22d90" />
-https://github.com/user-attachments/assets/fba0efd6-b274-4a2d-964b-ad2914036e83
-
-
+<video src="https://github.com/user-attachments/assets/fba0efd6-b274-4a2d-964b-ad2914036e83"></video>
 
 ## How it works
 - At application start, a gpu buffer is filled with terrain configuration data. Everytime you randomise the buffer is overwritten with new data.
